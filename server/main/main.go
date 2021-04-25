@@ -1,12 +1,26 @@
 package main
 
 import (
-	"chatroom/common/message"
-	"encoding/binary"
-	"encoding/json"
+	"chatroom/common/utils"
 	"fmt"
 	"net"
 )
+
+// 处理和客户端的通讯
+func process(conn net.Conn) {
+	defer conn.Close()
+
+	tf := &utils.Transfer{
+		Conn: conn,
+	}
+	err, m := tf.ReadMsg()
+	if err != nil {
+		fmt.Println("utils.ReadMsg failed", err)
+		return
+	}
+
+	fmt.Println("读取到的消息内容为：", m)
+}
 
 func main() {
 	fmt.Println("服务器在8888端口监听...")
@@ -30,36 +44,4 @@ func main() {
 		go process(conn)
 	}
 
-}
-
-// 处理和客户端的通讯
-func process(conn net.Conn) {
-	defer conn.Close()
-
-	buf := make([]byte, 8096)
-	// 先读取前4个字节
-	_, err := conn.Read(buf[:4])
-	if err != nil {
-		fmt.Println("conn.Read failed", err)
-		return
-	}
-
-	var msgLen uint32
-	msgLen = binary.BigEndian.Uint32(buf[:4])
-
-	// 根据msgLen读取消息内容
-	n, err := conn.Read(buf[:msgLen])
-	if err != nil || n != int(msgLen) {
-		fmt.Println("conn.Read failed", err)
-		return
-	}
-
-	var msg message.Message
-	err = json.Unmarshal(buf[:msgLen], &msg)
-	if err != nil {
-		fmt.Println("json.Unmarshal failed", err)
-		return
-	}
-
-	fmt.Println("读取到的消息内容:", msg)
 }
