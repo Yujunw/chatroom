@@ -36,7 +36,7 @@ func (t *Transfer) WriteMsg(data []byte) (err error) {
 	return
 }
 
-func (t *Transfer) ReadMsg() (err error, msg message.Message) {
+func (t *Transfer) ReadMsg() (msg message.Message, err error) {
 	buf := make([]byte, 8096)
 	// 先读取前4个字节
 	_, err = t.Conn.Read(buf[:4])

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"chatroom/common/utils"
 	"fmt"
 	"net"
 )
@@ -10,16 +9,14 @@ import (
 func process(conn net.Conn) {
 	defer conn.Close()
 
-	tf := &utils.Transfer{
+	processor := Processor{
 		Conn: conn,
 	}
-	err, m := tf.ReadMsg()
+	err := processor.loopProcessMsg()
 	if err != nil {
-		fmt.Println("utils.ReadMsg failed", err)
+		fmt.Println("客户端和服务器通讯协程错误=err", err)
 		return
 	}
-
-	fmt.Println("读取到的消息内容为：", m)
 }
 
 func main() {

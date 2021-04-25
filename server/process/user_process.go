@@ -1,0 +1,53 @@
+package process
+
+import (
+	"chatroom/common/message"
+	"chatroom/common/utils"
+	"encoding/json"
+	"fmt"
+	"net"
+)
+
+type UserProcess struct {
+	Conn net.Conn
+}
+
+func (u *UserProcess) ServerProcessLogin(msg *message.Message) (err error) {
+	var loginMsg message.LoginMsg
+	err = json.Unmarshal([]byte(msg.Data), &loginMsg)
+	if err != nil {
+		fmt.Println("json.Unmarshal failed", err)
+		return
+	}
+
+	// 定义一个返回登录结果的消息
+	var loginRepMsg message.Message
+	loginRepMsg.Type = message.LoginResMsgType
+
+	var loginResMsg message.LoginResMsg
+	if loginMsg.UserId == 100 && loginMsg.UserPwd == "yjw" {
+		loginResMsg.Code = 200
+	} else {
+		loginResMsg.Code = 500
+		loginResMsg.Error = "不存在该用户！"
+	}
+
+	data, err := json.Marshal(loginResMsg)
+	if err != nil {
+		fmt.Println("json.Marshal failed", err)
+		return
+	}
+
+	loginRepMsg.Data = string(data)
+
+	tf := &utils.Transfer{
+		Conn: u.Conn,
+	}
+
+	err = tf.WriteMsg(data)
+	if err != nil {
+		fmt.Println("tf.WriteMsg failed", err)
+		return
+	}
+	return
+}
