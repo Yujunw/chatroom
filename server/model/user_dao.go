@@ -1,0 +1,43 @@
+package model
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/gomodule/redigo/redis"
+)
+
+// UserDao 完成对User的各种操作
+type UserDao struct {
+	// redis连接池
+	pool *redis.Pool
+}
+
+// UserDao应该具备的功能：根据用户id在redis中查询用户信息
+func (d *UserDao) getUserById(conn redis.Conn, id int) (user *User, err error) {
+	res, err := redis.String(conn.Do("HGET", "users", id))
+	if err != nil {
+		// 表示未找到对应ID
+		if err == redis.ErrNil {
+			err = ERROR_USER_NOT_EXISTS
+		}
+		return
+	}
+
+	// todo 重新初始化一个user ???
+	user = &User{}
+	// 将res反序列化成User实例
+	err = json.Unmarshal([]byte(res), &user)
+	if err != nil {
+		fmt.Println("json.Unmarshal failed ", err)
+		return
+	}
+	return
+}
+
+// 完成对登录的校验
+// 如果用户id和密码都正确，返回一个user实例，否则err
+func (d *UserDao) Login(userId int, userPwd string) (user *User, err error) {
+	// 从redis连接池获取一条连接
+	conn := d.pool.Get()
+
+}

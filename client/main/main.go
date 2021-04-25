@@ -42,5 +42,7 @@ func main() {
 		process.Login(userId, userPwd)
 	} else if key == 2 {
 		fmt.Println("进行用户注册的逻辑....")
+	} else {
+		os.Exit(0)
 	}
 }
