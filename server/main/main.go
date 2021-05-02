@@ -1,6 +1,7 @@
 package main
 
 import (
+	"chatroom/server/model"
 	"fmt"
 	"net"
 )
@@ -19,7 +20,15 @@ func process(conn net.Conn) {
 	}
 }
 
+func initUserDao() {
+	// pool是全局变量，初始化UserDao需要在初始化redis连接池之后完成
+	model.MyUserDao = model.NewUserDao(pool)
+}
+
 func main() {
+	// 服务器启动后先初始化redis连接池
+	initPool("139.155.239.206:6379", 16, 0, 300)
+	initUserDao()
 	fmt.Println("服务器在8888端口监听...")
 	listener, err := net.Listen("tcp", "0.0.0.0:8888")
 	if err != nil {

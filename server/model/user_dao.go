@@ -12,6 +12,20 @@ type UserDao struct {
 	pool *redis.Pool
 }
 
+// 在服务器启动之后，就需要初始化一个UserDao实例
+// 将其作为全局变量，在需要redis操作时，直接使用即可
+var (
+	MyUserDao *UserDao
+)
+
+// 使用工厂模式，创建user
+func NewUserDao(pool *redis.Pool) (userDao *UserDao) {
+	userDao = &UserDao{
+		pool: pool,
+	}
+	return
+}
+
 // UserDao应该具备的功能：根据用户id在redis中查询用户信息
 func (d *UserDao) getUserById(conn redis.Conn, id int) (user *User, err error) {
 	res, err := redis.String(conn.Do("HGET", "users", id))
@@ -36,8 +50,20 @@ func (d *UserDao) getUserById(conn redis.Conn, id int) (user *User, err error) {
 
 // 完成对登录的校验
 // 如果用户id和密码都正确，返回一个user实例，否则err
-func (d *UserDao) Login(userId int, userPwd string) (user *User, err error) {
+func (u *UserDao) Login(userId int, userPwd string) (user *User, err error) {
 	// 从redis连接池获取一条连接
-	conn := d.pool.Get()
+	conn := u.pool.Get()
+	defer conn.Close()
 
+	user, err = u.getUserById(conn, userId)
+	if err != nil {
+		return
+	}
+
+	// 此时只能保证获取到用户，还需要判断密码
+	if user.UserPwd != userPwd {
+		err = ERROR_USER_PWD_WRONG
+		return
+	}
+	return
 }
